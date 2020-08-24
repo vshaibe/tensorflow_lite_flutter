@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:tensorflow_lite_flutter/helpers/app_helper.dart';
 import 'package:tensorflow_lite_flutter/helpers/tflite_helper.dart';
 
+import 'app_helper.dart';
+
 class CameraHelper {
   static CameraController camera;
 
@@ -22,11 +24,9 @@ class CameraHelper {
   static void initializeCamera() async {
     AppHelper.log("_initializeCamera", "Initializing camera..");
 
-    camera = CameraController(
-        await _getCamera(_direction),
-        defaultTargetPlatform == TargetPlatform.iOS
-            ? ResolutionPreset.low
-            : ResolutionPreset.high,
+    ResolutionPreset resPreset = ResolutionPreset.medium;
+
+    camera = CameraController(await _getCamera(_direction), resPreset,
         enableAudio: false);
     initializeControllerFuture = camera.initialize().then((value) {
       AppHelper.log(
@@ -36,6 +36,7 @@ class CameraHelper {
         if (!TFLiteHelper.modelLoaded) return;
         if (isDetecting) return;
         isDetecting = true;
+
         try {
           TFLiteHelper.classifyImage(image);
         } catch (e) {
