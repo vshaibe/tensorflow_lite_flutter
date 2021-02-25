@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:tensorflow_lite_flutter/models/result.dart';
 import 'package:tflite/tflite.dart';
+import 'package:flutter_logs/flutter_logs.dart';
+import 'package:uuid/uuid.dart';
 
 import 'app_helper.dart';
 
@@ -11,6 +14,7 @@ class TFLiteHelper {
       new StreamController.broadcast();
   static List<Result> _outputs = List();
   static var modelLoaded = false;
+  static var uuid = Uuid();
 
   static Future<String> loadModel() async {
     AppHelper.log("loadModel", "Loading model..");
@@ -22,6 +26,8 @@ class TFLiteHelper {
   }
 
   static classifyImage(CameraImage image) async {
+    var t = uuid.v4();
+    FlutterLogs.logInfo("START", t, DateTime.now().toIso8601String());
     await Tflite.runModelOnFrame(
             bytesList: image.planes.map((plane) {
               return plane.bytes;
@@ -34,6 +40,7 @@ class TFLiteHelper {
         .then((value) {
       if (value.isNotEmpty) {
         AppHelper.log("classifyImage", "Results loaded. ${value.length}");
+        FlutterLogs.logInfo("END", t, DateTime.now().toIso8601String());
 
         //Clear previous results
         _outputs.clear();
