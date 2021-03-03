@@ -18,9 +18,6 @@ class TFLiteHelper {
   static List<Result> _outputs = List();
   static var modelLoaded = false;
   static var uuid = Uuid();
-  static bool done = true;
-  static BehaviorSubject<bool> loadStatus = BehaviorSubject<bool>.seeded(false);
-
 
   static Future<String> loadModel() async {
     AppHelper.log("loadModel", "Loading model..");
@@ -69,46 +66,42 @@ class TFLiteHelper {
   }
 
   static classifyFileImage(String path, BuildContext context) async {
-    if (done) {
-      done = false;
-      ByteData bytes = await DefaultAssetBundle.of(context).load(path);
-      img.Image oriImage = img.decodeJpg(bytes.buffer.asUint8List());
-      img.Image resizedImage =
-          img.copyResize(oriImage, height: 224, width: 224);
-      FlutterLogs.logInfo(
-          "START_FileStream", path, DateTime.now().toIso8601String());
-      int startTime = new DateTime.now().millisecondsSinceEpoch;
-      await Tflite.runModelOnBinary(
-              binary: imageToByteListFloat32(resizedImage, 224, 127.5, 127.5),
-              numResults: 5,
-              threshold: 0.05,
-              asynch: true)
-          .then((value) {
-        done = true;
+    ByteData bytes = await DefaultAssetBundle.of(context).load(path);
+    img.Image oriImage = img.decodeJpg(bytes.buffer.asUint8List());
+    print(oriImage.width);
+    FlutterLogs.logInfo(
+        "START_FileStream", path, DateTime.now().toIso8601String());
+    int startTime = new DateTime.now().millisecondsSinceEpoch;
+    await Tflite.runModelOnBinary(
+            binary: imageToByteListFloat32(oriImage, 224, 127.5, 127.5),
+            numResults: 5,
+            threshold: 0.05,
+            asynch: true)
+        .then((value) {
+      if (value.isNotEmpty) {
+
         FlutterLogs.logInfo(
             "END_FileStream", path, DateTime.now().toIso8601String());
-        if (value.isNotEmpty) {
-          AppHelper.log("classifyImage", "Results loaded. ${value.length}");
+        AppHelper.log("classifyImage", "Results loaded. ${value.length}");
 
-          //Clear previous results
-          _outputs.clear();
+        //Clear previous results
+        _outputs.clear();
 
-          value.forEach((element) {
-            _outputs.add(Result(
-                element['confidence'], element['index'], element['label']));
+        value.forEach((element) {
+          _outputs.add(Result(
+              element['confidence'], element['index'], element['label']));
 
-            AppHelper.log("classifyImage",
-                "${element['confidence']} , ${element['index']}, ${element['label']}");
-          });
-        }
+          AppHelper.log("classifyImage",
+              "${element['confidence']} , ${element['index']}, ${element['label']}");
+        });
+      }
 
-        //Sort results according to most confidence
-        _outputs.sort((a, b) => a.confidence.compareTo(b.confidence));
+      //Sort results according to most confidence
+      _outputs.sort((a, b) => a.confidence.compareTo(b.confidence));
 
-        //Send results
-        tfLiteResultsController.add(_outputs);
-      });
-    }
+      //Send results
+      tfLiteResultsController.add(_outputs);
+    });
   }
 
   static classifyByte(Uint8List image, String name) async {
@@ -154,7 +147,6 @@ class TFLiteHelper {
 
   static void disposeModel() {
     Tflite.close();
-    loadStatus.close();
     tfLiteResultsController.close();
   }
 

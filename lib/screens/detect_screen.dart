@@ -31,7 +31,6 @@ class _DetectScreenPageState extends State<DetectScreen>
     TFLiteHelper.loadModel().then((value) {
       setState(() {
         TFLiteHelper.modelLoaded = true;
-        TFLiteHelper.loadStatus.add(true);
         PhotoStreamHelper.subject.add(1);
       });
     });
