@@ -1,6 +1,4 @@
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:tensorflow_lite_flutter/helpers/app_helper.dart';
 import 'package:tensorflow_lite_flutter/helpers/tflite_helper.dart';
 
@@ -23,7 +21,6 @@ class CameraHelper {
 
   static void initializeCamera() async {
     AppHelper.log("_initializeCamera", "Initializing camera..");
-
     ResolutionPreset resPreset = ResolutionPreset.medium;
 
     camera = CameraController(await _getCamera(_direction), resPreset,

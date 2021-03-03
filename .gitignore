@@ -30,6 +30,10 @@
 .pub/
 /build/
 
+# exclude representative data
+
+/assets/representative_data/*
+
 # Web related
 lib/generated_plugin_registrant.dart
 

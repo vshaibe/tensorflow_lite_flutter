@@ -1,10 +1,12 @@
-import 'package:camera/camera.dart';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:tensorflow_lite_flutter/helpers/app_helper.dart';
 import 'package:tensorflow_lite_flutter/helpers/camera_helper.dart';
 import 'package:tensorflow_lite_flutter/helpers/tflite_helper.dart';
+import 'package:tensorflow_lite_flutter/helpers/photo_stream_helper.dart';
 import 'package:tensorflow_lite_flutter/models/result.dart';
 
 class DetectScreen extends StatefulWidget {
@@ -20,7 +22,6 @@ class _DetectScreenPageState extends State<DetectScreen>
     with TickerProviderStateMixin {
   AnimationController _colorAnimController;
   Animation _colorTween;
-
   List<Result> outputs;
 
   void initState() {
@@ -30,11 +31,14 @@ class _DetectScreenPageState extends State<DetectScreen>
     TFLiteHelper.loadModel().then((value) {
       setState(() {
         TFLiteHelper.modelLoaded = true;
+        TFLiteHelper.loadStatus.add(true);
+        PhotoStreamHelper.subject.add(1);
       });
     });
 
     //Initialize Camera
-    CameraHelper.initializeCamera();
+    //CameraHelper.initializeCamera();
+    PhotoStreamHelper.initializePhotoStream(context);
 
     //Setup Animation
     _setupAnimation();
@@ -46,6 +50,7 @@ class _DetectScreenPageState extends State<DetectScreen>
             curve: Curves.bounceIn, duration: Duration(milliseconds: 500));
       });
 
+
       //Set Results
       outputs = value;
 
@@ -53,6 +58,8 @@ class _DetectScreenPageState extends State<DetectScreen>
       setState(() {
         //Set bit to false to allow detection again
         CameraHelper.isDetecting = false;
+        PhotoStreamHelper.subject.add(1);
+
       });
     }, onDone: () {
 
@@ -69,20 +76,14 @@ class _DetectScreenPageState extends State<DetectScreen>
         title: Text(widget.title),
       ),
       body: FutureBuilder<void>(
-        future: CameraHelper.initializeControllerFuture,
+        // future: CameraHelper.initializeControllerFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            // If the Future is complete, display the preview.
             return Stack(
-              children: <Widget>[
-                CameraPreview(CameraHelper.camera),
+              children:[
+                //CameraPreview(CameraHelper.camera),
                 _buildResultsWidget(width, outputs)
-              ],
+              ]
             );
-          } else {
-            // Otherwise, display a loading indicator.
-            return Center(child: CircularProgressIndicator());
-          }
         },
       ),
     );

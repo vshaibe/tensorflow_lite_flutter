@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:tensorflow_lite_flutter/models/result.dart';
 import 'package:tflite/tflite.dart';
 import 'package:flutter_logs/flutter_logs.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
+import 'package:rxdart/rxdart.dart';
 
 import 'app_helper.dart';
 
@@ -15,6 +18,9 @@ class TFLiteHelper {
   static List<Result> _outputs = List();
   static var modelLoaded = false;
   static var uuid = Uuid();
+  static bool done = true;
+  static BehaviorSubject<bool> loadStatus = BehaviorSubject<bool>.seeded(false);
+
 
   static Future<String> loadModel() async {
     AppHelper.log("loadModel", "Loading model..");
@@ -62,8 +68,109 @@ class TFLiteHelper {
     });
   }
 
+  static classifyFileImage(String path, BuildContext context) async {
+    if (done) {
+      done = false;
+      ByteData bytes = await DefaultAssetBundle.of(context).load(path);
+      img.Image oriImage = img.decodeJpg(bytes.buffer.asUint8List());
+      img.Image resizedImage =
+          img.copyResize(oriImage, height: 224, width: 224);
+      FlutterLogs.logInfo(
+          "START_FileStream", path, DateTime.now().toIso8601String());
+      int startTime = new DateTime.now().millisecondsSinceEpoch;
+      await Tflite.runModelOnBinary(
+              binary: imageToByteListFloat32(resizedImage, 224, 127.5, 127.5),
+              numResults: 5,
+              threshold: 0.05,
+              asynch: true)
+          .then((value) {
+        done = true;
+        FlutterLogs.logInfo(
+            "END_FileStream", path, DateTime.now().toIso8601String());
+        if (value.isNotEmpty) {
+          AppHelper.log("classifyImage", "Results loaded. ${value.length}");
+
+          //Clear previous results
+          _outputs.clear();
+
+          value.forEach((element) {
+            _outputs.add(Result(
+                element['confidence'], element['index'], element['label']));
+
+            AppHelper.log("classifyImage",
+                "${element['confidence']} , ${element['index']}, ${element['label']}");
+          });
+        }
+
+        //Sort results according to most confidence
+        _outputs.sort((a, b) => a.confidence.compareTo(b.confidence));
+
+        //Send results
+        tfLiteResultsController.add(_outputs);
+      });
+    }
+  }
+
+  static classifyByte(Uint8List image, String name) async {
+    FlutterLogs.logInfo(
+        "START_FileStream", name, DateTime.now().toIso8601String());
+    int startTime = new DateTime.now().millisecondsSinceEpoch;
+    FlutterLogs.logInfo("VALUE_FileStream", name, image.toString());
+    await Tflite.runModelOnFrame(
+            bytesList: [image].toList(),
+            numResults: 5,
+            imageHeight: 640,
+            imageWidth: 480,
+            imageMean: 0.0,
+            imageStd: 1.0,
+            asynch: true)
+        .then((value) {
+      FlutterLogs.logInfo(
+          "END_FileStream", name, DateTime.now().toIso8601String());
+      if (value.isNotEmpty) {
+        AppHelper.log("classifyImage", "Results loaded. ${value.length}");
+
+        //Clear previous results
+        _outputs.clear();
+
+        value.forEach((element) {
+          _outputs.add(Result(
+              element['confidence'], element['index'], element['label']));
+
+          AppHelper.log("classifyImage",
+              "${element['confidence']} , ${element['index']}, ${element['label']}");
+        });
+      }
+
+      //Sort results according to most confidence
+      _outputs.sort((a, b) => a.confidence.compareTo(b.confidence));
+
+      //Send results
+      tfLiteResultsController.add(_outputs);
+    }).catchError((e) {
+      FlutterLogs.logInfo("ERROR_FileStream", name, e.toString());
+    });
+  }
+
   static void disposeModel() {
     Tflite.close();
+    loadStatus.close();
     tfLiteResultsController.close();
+  }
+
+  static Uint8List imageToByteListFloat32(
+      img.Image image, int inputSize, double mean, double std) {
+    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+    var buffer = Float32List.view(convertedBytes.buffer);
+    int pixelIndex = 0;
+    for (var i = 0; i < inputSize; i++) {
+      for (var j = 0; j < inputSize; j++) {
+        var pixel = image.getPixel(j, i);
+        buffer[pixelIndex++] = (img.getRed(pixel) - mean) / std;
+        buffer[pixelIndex++] = (img.getGreen(pixel) - mean) / std;
+        buffer[pixelIndex++] = (img.getBlue(pixel) - mean) / std;
+      }
+    }
+    return convertedBytes.buffer.asUint8List();
   }
 }
