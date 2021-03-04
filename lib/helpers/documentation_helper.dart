@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class DocumentationHelper {
   static DocumentationHelper _instance;
@@ -24,7 +27,26 @@ class DocumentationHelper {
 
   void createJson() {
     String t = jsonEncode(_exp);
-    print(t);
+    writeString(t).then((value) {
+      print(value.path);
+    });
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    print(path);
+    return File('$path/' + DateTime.now().millisecondsSinceEpoch.toString() + '.json');
+  }
+
+  Future<File> writeString(String val) async {
+    final file = await _localFile;
+    return file.writeAsString(val);
   }
 }
 
