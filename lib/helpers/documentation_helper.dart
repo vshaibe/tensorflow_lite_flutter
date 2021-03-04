@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class DocumentationHelper {
   static DocumentationHelper _instance;
   _Experiment _exp = new _Experiment();
@@ -19,6 +21,11 @@ class DocumentationHelper {
       t.first.addThrough(time, result);
     }
   }
+
+  void createJson() {
+    String t = jsonEncode(_exp);
+    print(t);
+  }
 }
 
 class _Experiment {
@@ -34,6 +41,11 @@ class _Experiment {
     expFiles.add(t);
     return t;
   }
+
+  Map toJson() => {
+    'name': expName,
+    'ExperimentalFiles': expFiles.toList()
+  };
 }
 
 class _ExperimentFile {
@@ -49,14 +61,25 @@ class _ExperimentFile {
   void addThrough(int time, String result) {
     this.throughList.add(new _Through(time, result));
   }
+
+  Map toJson() => {
+    'name': name,
+    'averageTime': throughList.map((e) => e.time).reduce((a, b) => a + b)/throughList.length,
+    'throughList': throughList.toList()
+  };
 }
 
 class _Through {
   int time;
-  String results;
+  String result;
 
   _Through(int time, String result) {
     this.time = time;
-    this.results = result;
+    this.result = result;
   }
+
+  Map toJson() => {
+    'time': time,
+    'results': result
+  };
 }

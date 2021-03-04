@@ -25,12 +25,13 @@ class PhotoStreamHelper {
     subject.stream.listen((event) {
       paths.stream.listen((event) {
         TFLiteHelper.classifyFileImage(event.elementAt(counter), context);
-        counter = (counter + 1) % 101;
-        if (counter == 100) {
+        counter = (counter + 1) % 11;
+        if (counter == 10) {
           iteration++;
           if (iteration == 3) {
             var t = DocumentationHelper.Instance();
             print("fast through");
+            DocumentationHelper.Instance().createJson();
           }
         }
       });
