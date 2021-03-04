@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:tensorflow_lite_flutter/helpers/tflite_helper.dart';
 
 class DocumentationHelper {
   static DocumentationHelper _instance;
@@ -25,11 +26,13 @@ class DocumentationHelper {
     }
   }
 
-  void createJson() {
+  void clearExperiment() {
+    _exp = new _Experiment();
+  }
+
+  Future<File> createJson() {
     String t = jsonEncode(_exp);
-    writeString(t).then((value) {
-      print(value.path);
-    });
+    return writeString(t);
   }
 
   Future<String> get _localPath async {
@@ -41,7 +44,7 @@ class DocumentationHelper {
   Future<File> get _localFile async {
     final path = await _localPath;
     print(path);
-    return File('$path/' + DateTime.now().millisecondsSinceEpoch.toString() + '.json');
+    return File('$path/' + DateTime.now().toIso8601String() + '.json');
   }
 
   Future<File> writeString(String val) async {

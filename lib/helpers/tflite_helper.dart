@@ -71,9 +71,7 @@ class TFLiteHelper {
   static classifyFileImage(String path, BuildContext context) async {
     ByteData bytes = await DefaultAssetBundle.of(context).load(path);
     img.Image oriImage = img.decodeJpg(bytes.buffer.asUint8List());
-    print(oriImage.width);
-    FlutterLogs.logInfo(
-        "START_FileStream", path, DateTime.now().toIso8601String());
+    FlutterLogs.logInfo("START_FileStream", path, DateTime.now().toIso8601String());
     DateTime startTime = new DateTime.now();
     await Tflite.runModelOnBinary(
             binary: imageToByteListFloat32(oriImage, 224, 127.5, 127.5),
@@ -84,8 +82,7 @@ class TFLiteHelper {
       if (value.isNotEmpty) {
         String res = "";
 
-        FlutterLogs.logInfo(
-            "END_FileStream", path, DateTime.now().toIso8601String());
+        FlutterLogs.logInfo("END_FileStream", path, DateTime.now().toIso8601String());
         AppHelper.log("classifyImage", "Results loaded. ${value.length}");
 
         //Clear previous results
@@ -94,7 +91,7 @@ class TFLiteHelper {
         value.forEach((element) {
           _outputs.add(Result(
               element['confidence'], element['index'], element['label']));
-          res += element['confidence'].toString() + " " +  element['index'].toString() + " " + element['label'] + "\n";
+          res += "{" + element['confidence'].toString() + "," +  element['index'].toString() + "," + element['label'] + "}";
 
           AppHelper.log("classifyImage",
               "${element['confidence']} , ${element['index']}, ${element['label']}");

@@ -23,6 +23,7 @@ class _DetectScreenPageState extends State<DetectScreen>
   AnimationController _colorAnimController;
   Animation _colorTween;
   List<Result> outputs;
+  var runCounter = 0;
 
   void initState() {
     super.initState();
@@ -80,6 +81,7 @@ class _DetectScreenPageState extends State<DetectScreen>
             return Stack(
               children:[
                 //CameraPreview(CameraHelper.camera),
+                _modelTestResult(),
                 _buildResultsWidget(width, outputs)
               ]
             );
@@ -146,6 +148,28 @@ class _DetectScreenPageState extends State<DetectScreen>
         ),
       ),
     );
+  }
+
+  Widget _modelTestResult() {
+    Text t = new Text("run counter: $runCounter", style: TextStyle(
+      color: Colors.black,
+      fontSize: 20.0,
+    ));
+    PhotoStreamHelper.runDone.stream.listen((event) {
+      setState(() {
+        runCounter = event;
+      });
+    });
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          color: Colors.white,
+          child:Center(
+              child: t,
+        ),
+      ),
+    ));
   }
 
   void _setupAnimation() {
