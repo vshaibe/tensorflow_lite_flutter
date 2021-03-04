@@ -1,9 +1,5 @@
-0 Black Texture
-1 Blue Texture
-2 Green Texture
-3 Orange Texture
-4 Pink Texture
-5 Purple Texture
-6 Red Texture
-7 White Texture
-8 Yellow Texture
+address
+backswing
+impact
+finish
+other

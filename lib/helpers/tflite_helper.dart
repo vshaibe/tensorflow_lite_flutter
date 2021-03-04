@@ -8,7 +8,7 @@ import 'package:flutter_logs/flutter_logs.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
-import 'package:rxdart/rxdart.dart';
+import 'package:tensorflow_lite_flutter/helpers/documentation_helper.dart';
 
 import 'app_helper.dart';
 
@@ -18,12 +18,15 @@ class TFLiteHelper {
   static List<Result> _outputs = List();
   static var modelLoaded = false;
   static var uuid = Uuid();
+  static int _iteration;
 
   static Future<String> loadModel() async {
     AppHelper.log("loadModel", "Loading model..");
+    String modelName = "assets/model_no_quant.tflite";
+    DocumentationHelper.Instance().name = modelName;
 
     return Tflite.loadModel(
-      model: "assets/model_unquant.tflite",
+      model: modelName,
       labels: "assets/labels.txt",
     );
   }
@@ -71,7 +74,7 @@ class TFLiteHelper {
     print(oriImage.width);
     FlutterLogs.logInfo(
         "START_FileStream", path, DateTime.now().toIso8601String());
-    int startTime = new DateTime.now().millisecondsSinceEpoch;
+    DateTime startTime = new DateTime.now();
     await Tflite.runModelOnBinary(
             binary: imageToByteListFloat32(oriImage, 224, 127.5, 127.5),
             numResults: 5,
@@ -79,6 +82,7 @@ class TFLiteHelper {
             asynch: true)
         .then((value) {
       if (value.isNotEmpty) {
+        String res = "";
 
         FlutterLogs.logInfo(
             "END_FileStream", path, DateTime.now().toIso8601String());
@@ -90,10 +94,12 @@ class TFLiteHelper {
         value.forEach((element) {
           _outputs.add(Result(
               element['confidence'], element['index'], element['label']));
+          res += element['confidence'].toString() + " " +  element['index'].toString() + " " + element['label'] + "\n";
 
           AppHelper.log("classifyImage",
               "${element['confidence']} , ${element['index']}, ${element['label']}");
         });
+        DocumentationHelper.Instance().addInfo(path, DateTime.now().difference(startTime).inMilliseconds, res);
       }
 
       //Sort results according to most confidence
