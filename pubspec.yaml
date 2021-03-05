@@ -40,5 +40,7 @@ flutter:
   assets:
     # - assets/model_unquant.tflite
     - assets/model_no_quant.tflite
+    - assets/model_default_quant.tflite
+    - assets/model_latency_quant.tflite
     - assets/labels.txt
     - assets/representative_data/

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'dart:math';
 import 'package:tensorflow_lite_flutter/helpers/tflite_helper.dart';
 
 class DocumentationHelper {
@@ -90,6 +91,9 @@ class _ExperimentFile {
   Map toJson() => {
     'name': name,
     'averageTime': throughList.map((e) => e.time).reduce((a, b) => a + b)/throughList.length,
+    'minTime': throughList.map((e) => e.time).reduce(min),
+    'maxTime': throughList.map((e) => e.time).reduce(max),
+    'allSame': throughList.map((e) => e.result).every((element) => element == throughList.first.result),
     'throughList': throughList.toList()
   };
 }

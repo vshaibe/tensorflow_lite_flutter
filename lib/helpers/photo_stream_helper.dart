@@ -36,8 +36,8 @@ class PhotoStreamHelper {
               iteration = 0;
               counter = 0;
               DocumentationHelper.Instance().clearExperiment();
-              runDone.add(_globalRuns);
               _globalRuns++;
+              runDone.add(_globalRuns);
             });
           }
         }

@@ -22,7 +22,7 @@ class TFLiteHelper {
 
   static Future<String> loadModel() async {
     AppHelper.log("loadModel", "Loading model..");
-    String modelName = "assets/model_no_quant.tflite";
+    String modelName = "assets/model_latency_quant.tflite";
     DocumentationHelper.Instance().name = modelName;
 
     return Tflite.loadModel(
